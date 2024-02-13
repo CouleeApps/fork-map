@@ -1,4 +1,4 @@
-fork_map
+fork-map
 ----
 
 A Rust library for running operations in a child process spawned by `fork()`. Embrace fearful concurrency: fearful that your worker task will mess up your memory space.

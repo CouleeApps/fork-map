@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 /// ```
 /// use fork_map::fork_map;
 ///
+/// // Result type needs to implement serde::Serialize and serde::Deserialize
 /// pub fn do_with_fork(value: u64) -> u64 {
 ///     // Spawn a child process with a copy-on-write copy of memory
 ///     fork_map(|| {
