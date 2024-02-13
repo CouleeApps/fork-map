@@ -1,0 +1,21 @@
+[package]
+name = "fork-map"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "A crate for running operations in a child process spawned by `fork()`"
+keywords = ["parallel", "concurrency", "cursed"]
+categories = ["concurrency"]
+homepage = "https://github.com/CouleeApps/fork_map"
+documentation = "https://docs.rs/fork_map"
+repository = "https://github.com/CouleeApps/fork_map"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+libc = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde-error = "0.1.2"
+serde_json = "1.0"
