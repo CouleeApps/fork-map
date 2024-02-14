@@ -10,15 +10,17 @@ use fork_map::fork_map;
 
 pub fn do_with_fork(value: u64) -> u64 {
     // Spawn a child process with a copy-on-write copy of memory
-    fork_map(|| {
-        // Do some obnoxious operation with `value`
-        // * Maybe it leaks memory
-        // * Maybe it uses static resources unsafely and 
-        //   prevents multi-threaded operation
-        // * Maybe you couldn't figure out how to
-        //   send your data to a thread
-        Ok(value * 10)
-    }).unwrap()
+    unsafe {
+        fork_map(|| {
+            // Do some obnoxious operation with `value`
+            // * Maybe it leaks memory
+            // * Maybe it uses static resources unsafely and 
+            //   prevents multi-threaded operation
+            // * Maybe you couldn't figure out how to
+            //   send your data to a thread
+            Ok(value * 10)
+        }).unwrap()
+    }
     // Execution continues after the child process has exited
 }
 ```
@@ -43,10 +45,12 @@ pub fn main() {
     let results = my_big_list.into_par_iter().map(|item| {
         // Have each worker spawn a child process for the
         // operations we don't want polluting the parent's memory
-        fork_map(|| {
-            // Do your ugly operations here
-            Ok(item * 1234)
-        }).expect("fork_map succeeded")
+        unsafe {
+            fork_map(|| {
+                // Do your ugly operations here
+                Ok(item * 1234)
+            }).expect("fork_map succeeded")
+        }
     }).collect::<Vec<_>>();
 
     // Use results here
@@ -69,17 +73,23 @@ pub fn main() {
         .chunks(512)
         .map(|items| {
             // Now each child process does 512 items at once
-            fork_map(|| {
-                let mut results = vec![];
-                // Maybe this operation is only mildly heinous
-                // and we can do 512 of them before the child
-                // process needs to be restarted.
-                for item in items {
-                    results.push(item * 1234);
-                }
-                Ok(results)
-            }).expect("fork_map succeeded")
+            unsafe {
+                fork_map(|| {
+                    let mut results = vec![];
+                    // Maybe this operation is only mildly heinous
+                    // and we can do 512 of them before the child
+                    // process needs to be restarted.
+                    for item in items {
+                        results.push(item * 1234);
+                    }
+                    Ok(results)
+                }).expect("fork_map succeeded")
+            }
         })
         .collect::<Vec<_>>();
 }
 ```
+
+## Safety
+
+Due to the nature of `fork()`, this function is very unsound and likely violates most of Rust's guarantees about lifetimes, considering all of your memory gets duplicated into a second process, even though it calls `exit(0)` after your closure is executed. Any threads other than the one calling `fork_map` will not be present in the new process, so threaded lifetime guarantees are also violated. Don't even think about using async executors with this.
