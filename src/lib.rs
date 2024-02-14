@@ -92,7 +92,7 @@ pub unsafe fn fork_map<F, R>(func: F) -> anyhow::Result<R>
         let mut buf: [u8; BUF_SIZE] = [0; BUF_SIZE];
         let count = libc::read(pipe[0], buf.as_mut_ptr() as *mut libc::c_void, BUF_SIZE);
         if count < 0 {
-            break Err(anyhow!("io error: {}", *libc::__error()));
+            break Err(anyhow!("io error: {}", std::io::Error::last_os_error()));
         }
         des.extend_from_slice(&buf[0..(count as usize)]);
         // EOF signalled by less than the max bytes
